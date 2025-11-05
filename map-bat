@@ -1,8 +1,8 @@
 @echo off
 net use * /d /y
-net use x: \\192.168.4.16\storage_1 /user:admin password
-net use y: \\192.168.4.16\storage_2
-net use z: \\192.168.4.16\storage_3
+net use x: \\192.168.1.1\storage_1 /user:admin password
+net use y: \\192.168.1.1\storage_2
+net use z: \\192.168.1.1\storage_3
 net use /p:no
 
 under program/script:
