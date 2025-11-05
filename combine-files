@@ -1,0 +1,3 @@
+combine binary files (can be used on some video files)
+
+copy /b *.ts joined.ts
