@@ -10,6 +10,10 @@ curl() {
     command curl "$@" && echo
 }
 
+cat() {
+    command cat "$@" && echo
+}
+
 wanip() {
   echo "IPv4 Address:"
   ipv4=$(curl -4 -s https://ipinfo.io/ip)
