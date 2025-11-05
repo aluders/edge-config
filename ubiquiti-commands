@@ -1,0 +1,12 @@
+uap ssh reset...
+syswrapper.sh restore-default
+
+manual ssh cloudkey update...
+wget http://dl.ubnt.com/unifi/4.8.12/unifi_sysvinit_all.deb
+dpkg -i unifi_sysvinit_all.deb
+rm unifi_sysvinit_all.deb
+
+unifi ssh firmware update example...
+curl -O --insecure https://dl.ubnt.com/unifi/firmware/U7PG2/4.0.15.9872/BZ.qca956x.v4.0.15.9872.181229.0258.bin
+mv BZ.qca956x.v4.0.15.9872.181229.0258.bin /tmp/fwupdate.bin
+syswrapper.sh upgrade2 &
