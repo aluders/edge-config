@@ -1,0 +1,14 @@
+keyboard maestro macro...
+
+new macro - paste clipboard by typing
+trigger - hotkey
+action - pause (.5)
+action - execute applescript
+
+set theText to the clipboard
+tell application "System Events"
+	repeat with c in theText
+		keystroke c
+		delay 0.07
+	end repeat
+end tell
