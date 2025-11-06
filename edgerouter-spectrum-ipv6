@@ -8,7 +8,10 @@ set dhcpv6-pd pd 0 prefix-length 56
 set dhcpv6-pd pd 0 interface switch0 service slaac 
 set dhcpv6-pd pd 0 interface switch0 prefix-id 0 
 set dhcpv6-pd pd 0 interface switch0 host-address ::1 
-set ipv6 address autoconf  
+set ipv6 address autoconf
+commit
+save
+exit
 
 ----- the following may not be needed -----
 
