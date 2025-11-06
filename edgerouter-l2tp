@@ -1,0 +1,31 @@
+L2TP over IPSec
+
+configure
+set vpn ipsec ipsec-interfaces interface eth0
+set vpn ipsec nat-networks allowed-network 10.0.0.0/8
+set vpn ipsec nat-networks allowed-network 172.16.0.0/12
+set vpn ipsec nat-networks allowed-network 192.168.0.0/16
+set vpn ipsec nat-networks allowed-network 0.0.0.0/0 (or allow all subnets)
+set vpn ipsec nat-traversal enable
+set vpn l2tp remote-access authentication mode local
+set vpn l2tp remote-access authentication local-users username testuser password testpassword
+set vpn l2tp remote-access client-ip-pool start 192.168.1.101
+set vpn l2tp remote-access client-ip-pool stop 192.168.1.110
+set vpn l2tp remote-access dns-servers server-1 8.8.8.8
+set vpn l2tp remote-access dns-servers server-2 8.8.4.4
+set vpn l2tp remote-access ipsec-settings authentication mode pre-shared-secret
+set vpn l2tp remote-access ipsec-settings authentication pre-shared-secret testsecret
+set vpn l2tp remote-access ipsec-settings ike-lifetime 3600
+set vpn l2tp remote-access dhcp-interface eth0 (used for non static wan)
+set vpn l2tp remote-access outside-address STATICIP
+set vpn l2tp remote-access outside-nexthop STATICGATEWAY
+commit
+save
+exit
+
+edit WAN_LOCAL ruleset in GUI
+
+IKE accept UDP port 500
+L2TP accept UDP port 1701
+ESP accept protocol 50
+NAT-T accept UDP port 4500
