@@ -13,6 +13,8 @@ ssh-copy-id username@123.123.123.123
 remove stored known host
 ssh-keygen -R 123.123.123.123
 
+sudo ssh-add some-server.key
+
 scp /path/to/local/file.txt username@server-ip:/path/to/remote/
 scp username@server-ip:/path/to/remote/file.txt /path/to/local/
 scp -r ~/myfolder admin@192.168.4.20:/home/admin/
