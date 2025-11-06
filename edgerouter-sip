@@ -1,0 +1,5 @@
+configure
+set system conntrack modules sip disable
+commit
+save
+exit
