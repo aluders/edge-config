@@ -21,3 +21,6 @@ save
 exit
 
 remember to create wan_local firewall rule for UDP 51820
+
+possible script option...
+https://github.com/whiskerz007/ubnt_get_wireguard
