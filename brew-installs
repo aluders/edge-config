@@ -1,4 +1,5 @@
 alacritty
+asitop
 bat (cat replacement)
 btop
 cmatrix
@@ -9,6 +10,7 @@ fd (find replacement)
 glances
 handbrake
 htop
+iftop
 iterm2
 kew
 mkcert
