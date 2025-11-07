@@ -1,5 +1,4 @@
 alacritty
-asitop
 bat (cat replacement)
 btop
 cmatrix
@@ -13,6 +12,7 @@ htop
 iftop
 iterm2
 kew
+macmon
 mkcert
 mkvtoolnix
 mpv
