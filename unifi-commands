@@ -18,6 +18,6 @@ wget http://<URL>/somefirmware.bin
 ubnt-systool fwupdate /data/somefirmware.bin
 
 unifi ssh firmware update example...
-curl -O --insecure https://dl.ubnt.com/unifi/firmware/U7PG2/4.0.15.9872/BZ.qca956x.v4.0.15.9872.181229.0258.bin
-mv BZ.qca956x.v4.0.15.9872.181229.0258.bin /tmp/fwupdate.bin
+curl -O --insecure https://dl.ubnt.com/unifi/firmware/somefirmware.bin
+mv somefirmware.bin /tmp/fwupdate.bin
 syswrapper.sh upgrade2 &
