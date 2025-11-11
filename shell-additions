@@ -6,6 +6,8 @@ alias speedtest='speedtest-cli --secure'
 
 alias doggo='doggo --nameserver https://cloudflare-dns.com/dns-query'
 
+alias bat='bat --paging=never'
+
 curl() {
     command curl "$@" && echo
 }
