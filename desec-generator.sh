@@ -249,5 +249,6 @@ echo " DDNS Settings:"
 echo " Username: $FULLDOMAIN"
 echo " Password: $RESTRICTED_TOKEN"
 echo " Server: update.dedyn.io"
+echo " Protocol: dyndns2 (if applicable)
 echo "=============================================="
 echo ""
