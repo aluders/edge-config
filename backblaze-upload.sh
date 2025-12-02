@@ -131,7 +131,7 @@ fi
 
 # --- 5. Conclusion ---
 echo ""
-echo "✅ UPLOAD COMPLETE SUCCESS!"
+echo "✅ UPLOAD COMPLETE!"
 echo "File: $B2_FILE_NAME"
 echo "Size: $FILE_SIZE bytes"
 echo "SHA1: $SHA1_CHECKSUM"
