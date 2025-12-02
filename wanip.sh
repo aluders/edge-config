@@ -1,90 +1,22 @@
 #!/usr/bin/env bash
 
-# -----------------------------
+# ---------------------------------------------------
 # Colors
-# -----------------------------
-BOLD="\033[1m"
-RESET="\033[0m"
-CYAN="\033[36m"
-GREEN="\033[32m"
-YELLOW="\033[33m"
-RED="\033[31m"
-MAGENTA="\033[35m"
+# ---------------------------------------------------
+C_RESET="\033[0m"
+C_HEADER="\033[34m"     # blue
+C_KEY="\033[32m"        # green
+C_DETECTED="\033[35m"   # purple/magenta
 
-# Detect jq
-if command -v jq >/dev/null 2>&1; then
-  JQ=1
-else
-  JQ=0
-fi
-
-print_json() {
-  if [[ $JQ -eq 1 ]]; then
-    echo "$1" | jq .
-  else
-    echo "$1"
-  fi
-}
-
-# -----------------------------
-# Detection logic for label
-# -----------------------------
-detect_label() {
-  local json="$1"
-  local org=$(echo "$json" | grep -o '"org": *"[^"]*"' | sed 's/"org": "//; s/"$//')
-  local asn=$(echo "$json" | grep -o '"asn": {[^}]*}' | tr '\n' ' ')
-
-  # Normalize
-  org_lc=$(echo "$org" | tr '[:upper:]' '[:lower:]')
-
-  # Starlink
-  if echo "$org_lc" | grep -q "starlink"; then
-    echo -e "${MAGENTA}Starlink${RESET}"
-    return
-  fi
-
-  # Cloudflare WARP (ASN 13335)
-  if echo "$org_lc" | grep -q "cloudflare" && echo "$json" | grep -q "\"asn\": *13335"; then
-    echo -e "${CYAN}Cloudflare WARP${RESET}"
-    return
-  fi
-
-  # Common VPN providers
-  if echo "$org_lc" | grep -Eq "nord|proton|mullvad|private internet|pia|express|surfshark|cyberghost"; then
-    echo -e "${YELLOW}VPN${RESET}"
-    return
-  fi
-
-  # Common hosting providers
-  if echo "$org_lc" | grep -Eq "amazon|aws|google|linode|digitalocean|microsoft|ovh|contabo|hetzner"; then
-    echo -e "${RED}Hosting Provider${RESET}"
-    return
-  fi
-
-  # Bogon / private ranges flagged by ipinfo
-  if echo "$json" | grep -q '"bogon": true'; then
-    echo -e "${RED}CGNAT (Private/Bogon)${RESET}"
-    return
-  fi
-
-  # Default guess
-  echo -e "${GREEN}Conventional ISP${RESET}"
-}
-
-# -----------------------------
+# ---------------------------------------------------
 # Flags
-# -----------------------------
+# ---------------------------------------------------
 ONLY4=0
 ONLY6=0
-INFOONLY=0  # keeping this if you want to wire it up later
+RAW=0
 
 usage() {
-  echo "Usage: wanip [options]"
-  echo ""
-  echo "  -4        IPv4 only"
-  echo "  -6        IPv6 only"
-  echo "  -info     (reserved for future use)"
-  echo "  -h        Help"
+  echo "Usage: wanip [-4] [-6] [--raw]"
   exit 0
 }
 
@@ -92,72 +24,115 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -4) ONLY4=1 ;;
     -6) ONLY6=1 ;;
-    -info) INFOONLY=1 ;;  # not used yet, but parsed
+    --raw) RAW=1 ;;
     -h|--help) usage ;;
     *) echo "Unknown option: $1"; usage ;;
   esac
   shift
 done
 
-# -----------------------------
-# Output header
-# -----------------------------
-echo -e "${BOLD}${CYAN}==============================="
-echo "        WAN IP LOOKUP"
-echo -e "===============================${RESET}"
+# ---------------------------------------------------
+# Connection Type Detection
+# ---------------------------------------------------
+detect_type() {
+  local org_lc=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
-# -----------------------------
-# Lookup helper
-#   $1 = version (4 or 6)
-#   $2 = curl family flag (-4 or -6)
-#   $3 = URL to query for bare IP
-#   $4 = label (IPv4 / IPv6)
-# -----------------------------
-lookup_ip() {
-  local version="$1"
-  local ipcmd="$2"
-  local url="$3"
-  local label="$4"
-
-  # IMPORTANT: IPv4 and IPv6 use different endpoints
-  ipaddr=$(curl $ipcmd -s "$url")
-
-  echo -e "${BOLD}${GREEN}$label Address:${RESET}"
-
-  if [[ -z "$ipaddr" ]]; then
-    echo -e "  ${RED}Not available${RESET}"
-    echo
-    return
+  if echo "$org_lc" | grep -q "starlink"; then
+    if echo "$org_lc" | grep -Eq "residential"; then echo "Starlink Residential"; return; fi
+    if echo "$org_lc" | grep -Eq "business|premium"; then echo "Starlink Business"; return; fi
+    if echo "$org_lc" | grep -Eq "mobility|mobile|rv"; then echo "Starlink Mobility"; return; fi
+    if echo "$org_lc" | grep -q "maritime"; then echo "Starlink Maritime"; return; fi
+    if echo "$org_lc" | grep -q "aviation"; then echo "Starlink Aviation"; return; fi
+    echo "Starlink"; return
   fi
 
-  echo "  $ipaddr"
-  echo
+  if echo "$org_lc" | grep -q "cloudflare"; then echo "Cloudflare / WARP"; return; fi
+  if echo "$org_lc" | grep -Eq "vpn|nord|proton|mullvad|private internet|pia|express|surfshark|cyberghost"; then echo "VPN"; return; fi
+  if echo "$org_lc" | grep -Eq "amazon|aws|google|digitalocean|linode|microsoft|ovh|contabo|hetzner"; then echo "Hosting Provider"; return; fi
 
-  # Fetch full details from ipinfo.io/<ip>
-  json=$(curl -s "https://ipinfo.io/$ipaddr")
+  echo ""
+}
 
-  echo -e "${YELLOW}$label Details:${RESET}"
-  print_json "$json"
-  echo
+# ---------------------------------------------------
+# Raw JSON Mode
+# ---------------------------------------------------
+raw_output() {
+  raw=$(curl -s "https://ipinfo.io/$1/json" | sed '/"readme"/d')
 
-  echo -e "${BOLD}${CYAN}$label Connection Type:${RESET}"
-  detect_label "$json"
+  org=$(echo "$raw" | grep -o '"org": *"[^"]*"' | sed 's/"org": "//; s/"$//')
+  detected=$(detect_type "$org")
+
+  if [[ -n "$detected" ]]; then
+    echo "$raw" | jq --arg dt "$detected" '. + { detected_type: $dt }'
+  else
+    echo "$raw"
+  fi
+}
+
+# ---------------------------------------------------
+# Pretty Human Output
+# ---------------------------------------------------
+pretty_output() {
+  local section="$1"
+  local ip="$2"
+
+  raw=$(curl -s "https://ipinfo.io/$ip/json" | sed '/"readme"/d')
+
+  echo -e "${C_HEADER}==============================="
+  echo "          $section"
+  echo -e "===============================${C_RESET}"
+
+  # JSON → readable text
+  cleaned=$(echo "$raw" \
+    | sed 's/[{}"]//g' \
+    | sed 's/^ *//g' \
+    | sed '/^$/d'
+  )
+
+  # Remove *JSON commas only* — keep commas inside values intact
+  cleaned=$(echo "$cleaned" \
+    | sed 's/,$//g' \
+    | sed 's/: /:/g'
+  )
+
+  # Print with color
+  while IFS= read -r line; do
+    key="${line%%:*}"
+    val="${line#*:}"
+    echo -e "${C_KEY}${key}${C_RESET}: ${val}"
+  done <<< "$cleaned"
+
+  # Detection type
+  org=$(echo "$raw" | grep -o '"org": *"[^"]*"' | sed 's/"org": "//; s/"$//')
+  detected=$(detect_type "$org")
+
+  if [[ -n "$detected" ]]; then
+    echo -e "${C_DETECTED}detected type:${C_RESET} ${detected}"
+  fi
+
   echo
 }
 
-# -----------------------------
-# Do the lookups
-# -----------------------------
-if [[ $ONLY6 -eq 0 ]]; then
-  # IPv4: use ipinfo.io/ip over IPv4
-  lookup_ip 4 "-4" "https://ipinfo.io/ip" "IPv4"
-fi
+# ---------------------------------------------------
+# Lookup Helper
+# ---------------------------------------------------
+lookup() {
+  local curlflag="$1"
+  local url="$2"
+  local label="$3"
 
-if [[ $ONLY4 -eq 0 ]]; then
-  # IPv6: use v6.ipinfo.io/ip over IPv6
-  lookup_ip 6 "-6" "https://v6.ipinfo.io/ip" "IPv6"
-fi
+  ip=$(curl $curlflag -s "$url")
+  [[ -z "$ip" ]] && return
 
-echo -e "${CYAN}==============================="
-echo -e "           Done"
-echo -e "===============================${RESET}"
+  if [[ $RAW -eq 1 ]]; then
+    raw_output "$ip"
+  else
+    pretty_output "$label" "$ip"
+  fi
+}
+
+# ---------------------------------------------------
+# Execute Lookups
+# ---------------------------------------------------
+[[ $ONLY6 -eq 0 ]] && lookup "-4" "https://ipinfo.io/ip" "IPv4"
+[[ $ONLY4 -eq 0 ]] && lookup "-6" "https://v6.ipinfo.io/ip" "IPv6"
