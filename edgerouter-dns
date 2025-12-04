@@ -14,8 +14,8 @@ show dns forwarding nameservers
 -----------------------------------------------
    Nameservers configured for DNS forwarding
 -----------------------------------------------
-208.67.222.222 available via 'statically configured'
-208.67.220.220 available via 'statically configured'
+8.8.8.8 available via 'statically configured'
+8.8.4.4 available via 'statically configured'
 
 -----------------------------------------------
  Nameservers NOT configured for DNS forwarding
